@@ -8,6 +8,11 @@ import java.util.*;
 public class ModConfig {
     public enum IncrementMode { FIXED, PERCENT }
 
+    /** Bumped by sanitize() when old config files are migrated. */
+    public int configVersion = 0;
+    /** Chat/sound/flash notification whenever a new top bid is detected. */
+    public boolean notifyOnBid = true;
+
     // ---- streamers ----
     public List<StreamerProfile> streamers = new ArrayList<>();
     public String selectedStreamer = "";
@@ -46,7 +51,7 @@ public class ModConfig {
     public boolean parsingEnabled = true;
     public boolean autoStartTimerFromChat = false;
     /** Only count payments whose recipient is the selected streamer (needs a (?<recipient>) group). */
-    public boolean onlySelectedStreamer = true;
+    public boolean onlySelectedStreamer = false;
     /** Writes unmatched chat lines containing one of logKeywords to donutauction-chatlog.txt (local only). */
     public boolean logUnmatchedChat = false;
     public List<String> logKeywords = new ArrayList<>(List.of("auction", "bid", "paid", "payment", "sold", "won"));
@@ -61,8 +66,7 @@ public class ModConfig {
         l.add(new ParseRule("SELFTEST end", EventType.AUCTION_END, "^TEST END(?: (?<user>\\w+) (?<amount>\\S+))?$", true));
         // Real DonutSMP line seen in chat: "IcyL0 was paid $6.4M by freebushr1"
         // recipient = the streamer, user = the bidder, amount supports K/M/B/T suffixes.
-        l.add(new ParseRule("DonutSMP paid", EventType.BID,
-                "(?<recipient>[\\w.]+) was paid \\$(?<amount>[\\d.,]+[kmbtKMBT]?) by (?<user>[\\w.]+)", true));
+        l.add(paidRule());
         // EXAMPLE rules: GUESSES, disabled. Replace with REAL DonutSMP messages once verified.
         l.add(new ParseRule("EXAMPLE bid (UNVERIFIED)", EventType.BID,
                 "(?i)(?<user>\\w{3,16}) (?:placed a bid of|bid) \\$?(?<amount>[\\d.,]+[kmbt]?)", false));
@@ -71,6 +75,12 @@ public class ModConfig {
         l.add(new ParseRule("EXAMPLE end (UNVERIFIED)", EventType.AUCTION_END,
                 "(?i)auction (?:ended|has ended)", false));
         return l;
+    }
+
+    /** Matches: "IcyL0 was paid $6.4M by freebushr1" (recipient = streamer, user = bidder). */
+    public static ParseRule paidRule() {
+        return new ParseRule("DonutSMP paid", EventType.BID,
+                "(?i)(?<recipient>[\\w.]+) was paid \\$?(?<amount>[\\d.,]+[kmbt]?) by (?<user>[\\w.]+)", true);
     }
 
     public StreamerProfile selected() {
@@ -95,6 +105,14 @@ public class ModConfig {
 
         if (rules == null) rules = defaultRules();
         rules.removeIf(Objects::isNull);
+        if (configVersion < 2) {
+            // Config files written by v1.0 have no DonutSMP rule: add it once.
+            boolean has = false;
+            for (ParseRule r : rules) if ("DonutSMP paid".equals(r.name)) has = true;
+            if (!has) rules.add(0, paidRule());
+            onlySelectedStreamer = false;
+            configVersion = 2;
+        }
         if (logKeywords == null) logKeywords = new ArrayList<>(List.of("auction", "bid"));
         if (incrementMode == null) incrementMode = IncrementMode.FIXED;
         if (soundType == null) soundType = NotificationSound.PLING;

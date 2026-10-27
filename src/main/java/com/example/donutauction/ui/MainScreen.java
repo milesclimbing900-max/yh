@@ -39,8 +39,10 @@ public class MainScreen extends Screen {
         int cx = width / 2, left = cx - 205, right = cx + 5;
 
         // --- streamer column ---
-        btn(left, 40, 98, "< Prev", () -> cycle(-1));
-        btn(left + 102, 40, 98, "Next >", () -> cycle(1));
+        if (c.streamers.size() > 1) {
+            btn(left, 40, 98, "< Prev", () -> cycle(-1));
+            btn(left + 102, 40, 98, "Next >", () -> cycle(1));
+        }
         labels.add(new Lbl("Name", left, 70));
         nameField = field(left, 80, 200, "", "streamer name");
         labels.add(new Lbl("Stream delay (2.5s or 2500ms; bare number = seconds)", left, 102));
@@ -111,6 +113,7 @@ public class MainScreen extends Screen {
         c.sanitize();
         ConfigManager.save();
         status = (existing != null ? "Updated " : "Added ") + name + " (" + Fmt.delay(delay) + ").";
+        clearAndInit();
     }
 
     private void removeSelected() {
@@ -122,6 +125,7 @@ public class MainScreen extends Screen {
         ConfigManager.save();
         fillFields();
         status = "Removed " + sp.name + ".";
+        clearAndInit();
     }
 
     private void startTimer() {
@@ -164,6 +168,11 @@ public class MainScreen extends Screen {
         ctx.drawTextWithShadow(textRenderer, "Selected: " + (sp == null ? "(none)" : sp.name),
                 width / 2 - 205, 28, 0xFFFFFF55);
 
+        int n = ConfigManager.get().streamers.size();
+        if (n <= 1) {
+            ctx.drawTextWithShadow(textRenderer, n == 0 ? "No streamer yet: fill in below, then Add"
+                    : "Add a 2nd streamer to switch between them", width / 2 - 205, 46, 0xFF888888);
+        }
         GlassPanel.draw(ctx, textRenderer, width / 2 - 205, 166, InfoLines.build(), "Auction status",
                 ConfigManager.get().hudOpacity, 410);
         if (!status.isEmpty()) ctx.drawTextWithShadow(textRenderer, status, width / 2 - 205, height - 42, 0xFF55FFFF);

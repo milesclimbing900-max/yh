@@ -62,6 +62,7 @@ public class SettingsScreen extends Screen {
             toggle(R, 54, w, () -> "Log unmatched chat: " + (c.logUnmatchedChat ? "ON" : "OFF"), () -> c.logUnmatchedChat = !c.logUnmatchedChat);
             toggle(L, 78, w, () -> "Auto-start from chat: " + (c.autoStartTimerFromChat ? "ON" : "OFF"), () -> c.autoStartTimerFromChat = !c.autoStartTimerFromChat);
             toggle(R, 78, w, () -> "Only selected streamer: " + (c.onlySelectedStreamer ? "ON" : "OFF"), () -> c.onlySelectedStreamer = !c.onlySelectedStreamer);
+            toggle(R, 102, w, () -> "New-bid alerts: " + (c.notifyOnBid ? "ON" : "OFF"), () -> c.notifyOnBid = !c.notifyOnBid);
             addBtn(L, 102, w, "Move HUD / opacity...", () -> { applyFields(); if (client != null) client.setScreen(new HudEditScreen(this)); });
 
             labels.add(new Lbl("Fixed increment (1500, 2k, 1.5m)", L, 130));

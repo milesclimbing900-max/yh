@@ -4,6 +4,7 @@ import com.example.donutauction.DonutAuctionClient;
 import com.example.donutauction.calc.BidCalculator;
 import com.example.donutauction.config.ConfigManager;
 import com.example.donutauction.config.ModConfig;
+import com.example.donutauction.notify.Notifier;
 import com.example.donutauction.timer.AuctionTimer;
 import com.example.donutauction.util.Fmt;
 
@@ -67,6 +68,8 @@ public final class ChatTracker {
                 if (e.amount() == null) { log("Bid message without readable amount: " + e.rawText()); return; }
                 if (!recipientOk(c, e)) {
                     log("Ignored payment to " + e.recipient() + " (selected streamer: " + c.selectedStreamer + ")");
+                    Notifier.info("Ignored payment to " + e.recipient() + " (selected streamer is " + c.selectedStreamer
+                            + "). Change the streamer or turn off \"Only selected streamer\".");
                     return;
                 }
                 setBid(new AmountRecord(e.user(), e.amount(), e.timestampMs(), streamer));
@@ -102,6 +105,7 @@ public final class ChatTracker {
         if (latestBid != null) push(previousBids, latestBid, 10);
         latestBid = r;
         log("Bid " + Fmt.amount(r.amount()) + " by " + r.user());
+        if (ConfigManager.get().notifyOnBid) DonutAuctionClient.NOTIFIER.onNewBid(r.user(), r.amount());
     }
 
     public void clearBids() {

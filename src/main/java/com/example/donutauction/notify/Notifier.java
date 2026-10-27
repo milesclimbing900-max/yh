@@ -30,6 +30,11 @@ public final class Notifier implements AuctionTimer.Listener {
         fire("Bid window (estimated): " + extra + ". Bid manually.", 1.3f, 0xAA00AAFF);
     }
 
+    /** Called when a new, higher top bid is detected in chat. */
+    public void onNewBid(String user, double amount) {
+        fire("New top bid: " + Fmt.amount(amount) + " by " + user, 1.25f, 0xAA30D060);
+    }
+
     @Override
     public void onEnd() {
         fire("Estimated auction end reached (not verified by server)", 0.7f, 0xAAFF3030);
